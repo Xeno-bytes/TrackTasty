@@ -430,7 +430,6 @@ class _LineGraphContainerState extends State<LineGraphContainer> {
                     },
                     fitInsideHorizontally: true,
                     fitInsideVertically: true,
-                    getTooltipColor: (spot) => Colors.blueGrey,
                   ),
                   handleBuiltInTouches: true,
                   touchSpotThreshold: 16,

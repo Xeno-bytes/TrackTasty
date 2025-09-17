@@ -532,10 +532,8 @@ class _AccountManagementSectionState extends State<AccountManagementSection> {
 
   Future<void> _loadUsers() async {
     try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('Users')
-          .orderBy('createdAt', descending: true)
-          .get();
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('Users').get();
 
       setState(() {
         _users = querySnapshot.docs;
@@ -771,7 +769,8 @@ class _AccountManagementSectionState extends State<AccountManagementSection> {
 
             const SizedBox(height: 12),
 
-            Expanded(
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6, // Fixed height
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : filteredUsers.isEmpty
@@ -1007,95 +1006,95 @@ class _ChatbotManagementSectionState extends State<ChatbotManagementSection> {
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
             else
-              Expanded(
-                child: Column(
-                  children: [
-                    // Prompt Editor
-                    Expanded(
-                      child: Card(
-                        color: Colors.grey[850],
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'System Prompt',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16),
-                              ),
-                              const SizedBox(height: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _promptController,
-                                  maxLines: null,
-                                  expands: true,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontFamily: 'Monospace',
+              Column(
+                children: [
+                  // FIXED: Replace Expanded with SizedBox
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: Card(
+                      color: Colors.grey[850],
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'System Prompt',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              // Keep this Expanded inside the fixed container
+                              child: TextFormField(
+                                controller: _promptController,
+                                maxLines: null,
+                                expands: true,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontFamily: 'Monospace',
+                                ),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.grey[800],
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none,
                                   ),
-                                  decoration: InputDecoration(
-                                    filled: true,
-                                    fillColor: Colors.grey[800],
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.all(12),
-                                  ),
+                                  contentPadding: const EdgeInsets.all(12),
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Character count: ${_promptController.text.length}',
-                                style: TextStyle(color: Colors.grey[400]),
-                              ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Character count: ${_promptController.text.length}',
+                              style: TextStyle(color: Colors.grey[400]),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+                  ),
 
-                    const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSaving ? null : _testPrompt,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[800],
-                              minimumSize: const Size(0, 48),
-                            ),
-                            child: const Text('Test Prompt'),
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isSaving ? null : _testPrompt,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[800],
+                            minimumSize: const Size(0, 48),
                           ),
+                          child: const Text('Test Prompt'),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSaving ? null : _saveSystemPrompt,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryColor,
-                              minimumSize: const Size(0, 48),
-                            ),
-                            child: _isSaving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text('Save Changes'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isSaving ? null : _saveSystemPrompt,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            minimumSize: const Size(0, 48),
                           ),
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Save Changes'),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
           ],
         ),
@@ -1335,7 +1334,8 @@ class _FeedbackManagementSectionState extends State<FeedbackManagementSection> {
             ),
 
             const SizedBox(height: 16),
-            Expanded(
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('feedback')

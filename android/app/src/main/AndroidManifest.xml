@@ -18,6 +18,7 @@
         android:label="TrackTasty"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+         <uses-library android:name="com.google.android.gms" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
