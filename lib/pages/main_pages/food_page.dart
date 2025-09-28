@@ -21,6 +21,7 @@ class _FoodPageState extends State<FoodPage> {
   List<dynamic> _searchResults = [];
   bool _isLoading = false;
   final FatSecretApiService _apiService = FatSecretApiService();
+  DateTime? _lastPressed;
 
   Future<void> _searchFood(String query) async {
     if (query.isEmpty) {
@@ -102,6 +103,14 @@ class _FoodPageState extends State<FoodPage> {
   // Function to show food confirmation sheet
   Future<void> _saveFoodToFirebase(
       Map<String, dynamic> food, Map<String, dynamic> nutrients) async {
+    // Prevent double tapping within 2 seconds
+    final now = DateTime.now();
+    if (_lastPressed != null &&
+        now.difference(_lastPressed!) < Duration(seconds: 2)) {
+      return;
+    }
+    _lastPressed = now;
+
     final user = FirebaseAuth.instance.currentUser;
     final today = DateTime.now();
     final foodLogId = '${user?.uid}_${today.year}-${today.month}-${today.day}';

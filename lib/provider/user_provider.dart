@@ -35,24 +35,27 @@ class UserProvider extends ChangeNotifier {
 
   // Update nickname
   Future<bool> updateUsername(String newUsername) async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+    final user = _auth.currentUser;
+    if (user != null && user.email != null) {
+      try {
+        // 1. Write to the database
+        await _firestore.collection("Users").doc(user.email!).set({
+          'username': newUsername,
+        }, SetOptions(merge: true));
+
+        // 2. Immediately update local state
+        if (_userData != null) {
+          _userData!['username'] = newUsername;
+        }
+        notifyListeners(); // This will trigger UI updates
+
+        return true;
+      } catch (e) {
+        debugPrint("Error updating username in provider: $e");
         return false;
       }
-      await _firestore.collection("Users").doc(user.email).set(
-        {
-          'username': newUsername,
-        },
-        SetOptions(merge: true),
-      );
-      return true; // Success
-    } catch (e) {
-      return false; // Failure
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
+    return false;
   }
 
   Future<void> forgetPassword(String email) async {

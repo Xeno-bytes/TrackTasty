@@ -29,6 +29,11 @@ class _ChatBotState extends State<ChatBot> with AutomaticKeepAliveClientMixin {
   bool _showResetButton = false;
   bool isMetric = false;
 
+  // Text field height management
+  final double _minTextFieldHeight = 56.0;
+  final double _maxTextFieldHeight = 120.0;
+  double _currentTextFieldHeight = 56.0;
+
   // Nutrition data state
   Map<String, dynamic>? _nutritionData;
   Map<String, dynamic>? _userGoals;
@@ -42,6 +47,9 @@ class _ChatBotState extends State<ChatBot> with AutomaticKeepAliveClientMixin {
     _initializeUserData();
     _loadNutritionData();
     _loadConversationHistory();
+
+    // Listen to text changes to adjust height
+    _messageController.addListener(_adjustTextFieldHeight);
 
     _scrollController.addListener(() {
       // Check if the user is at the very bottom of the screen
@@ -69,6 +77,28 @@ class _ChatBotState extends State<ChatBot> with AutomaticKeepAliveClientMixin {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Adjust text field height based on content
+  void _adjustTextFieldHeight() {
+    final text = _messageController.text;
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(color: Colors.white, fontSize: 16),
+      ),
+      maxLines: 4,
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout(maxWidth: MediaQuery.of(context).size.width - 120);
+
+    final desiredHeight = textPainter.size.height + 24; // Add padding
+
+    setState(() {
+      _currentTextFieldHeight =
+          desiredHeight.clamp(_minTextFieldHeight, _maxTextFieldHeight);
+    });
   }
 
   // Initialize user data using UserProvider
@@ -265,16 +295,16 @@ class _ChatBotState extends State<ChatBot> with AutomaticKeepAliveClientMixin {
   void _addWelcomeMessage() {
     _messages.add({
       "role": "assistant",
-      "content": "👋 Hi! I'm your Macro Tracking Assistant!\n\n"
+      "content": ":wave: Hi! I'm your Macro Tracking Assistant!\n\n"
           "I can help you with:\n"
-          "• Calculating your ideal macros\n"
+          "• Provide nutritional information of a food\n"
           "• Tracking meals and nutrients\n"
           "• Planning meals for your goals\n"
-          "• Understanding food nutrition\n\n"
+          "• Share recipes that you are interested in\n\n"
           "Try asking:\n"
-          "• \"Calculate my macros for weight loss\"\n"
-          "• \"What's the protein in 200g chicken?\"\n"
-          "• \"Plan a high-protein breakfast\""
+          "• \"What is the recipe of Chicken Adobo?\"\n"
+          "• \"What's the macro of chicken breast?\"\n"
+          "• \"Plan a high-protein meal for the whole day.\""
     });
 
     // Save the conversation after adding welcome message
@@ -480,6 +510,8 @@ class _ChatBotState extends State<ChatBot> with AutomaticKeepAliveClientMixin {
       _messages.add({"role": "user", "content": userMessage});
       _messageController.clear();
       _isLoading = true;
+      _currentTextFieldHeight =
+          _minTextFieldHeight; // Reset height after sending
     });
 
     // Save the conversation after adding user message
@@ -671,8 +703,53 @@ class _ChatBotState extends State<ChatBot> with AutomaticKeepAliveClientMixin {
     }
   }
 
+  // Show settings popup menu
+  void _showSettingsMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.refresh, color: Colors.blue[300]),
+                title: Text('Reload User Data',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _refreshUserData();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.restart_alt, color: Colors.red[300]),
+                title:
+                    Text('Reset Chat', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _resetConversation();
+                },
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Close', style: TextStyle(color: Colors.grey[400])),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
     super.build(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -896,35 +973,50 @@ class _ChatBotState extends State<ChatBot> with AutomaticKeepAliveClientMixin {
                   },
                 ),
               ),
-              // Removed the Reload User Data button from the bottom
+              // Updated input area with settings button and expandable text field
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    // Settings button
+
+                    // Expandable text field
                     Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        focusNode: _messageNode,
-                        autofocus: false,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: "Type a message...",
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide.none,
+                      child: Container(
+                        height: _currentTextFieldHeight,
+                        child: TextField(
+                          controller: _messageController,
+                          focusNode: _messageNode,
+                          autofocus: false,
+                          style: const TextStyle(color: Colors.white),
+                          maxLines: null, // Allow unlimited lines
+                          decoration: InputDecoration(
+                            hintText: "Type a message...",
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[800],
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                           ),
-                          filled: true,
-                          fillColor: Colors.grey[800],
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
+                          onSubmitted: (_) => _sendMessage(),
                         ),
-                        onSubmitted: (_) => _sendMessage(),
                       ),
                     ),
                     const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _showSettingsMenu(context),
+                      icon: Icon(Icons.settings, color: Colors.grey[400]),
+                      tooltip: 'Settings',
+                    ),
+                    const SizedBox(width: 4),
+                    // Send button
                     IconButton(
                       onPressed: _isLoading ? null : _sendMessage,
                       icon: _isLoading
@@ -935,109 +1027,6 @@ class _ChatBotState extends State<ChatBot> with AutomaticKeepAliveClientMixin {
                 ),
               ),
             ],
-          ),
-
-          // Floating buttons that appear when scrolling up (not at bottom)
-          AnimatedOpacity(
-            opacity: _showResetButton
-                ? 1.0
-                : 0.0, // Animate opacity based on visibility
-            duration: const Duration(milliseconds: 300), // Animation duration
-            curve: Curves.easeInOut, // Smooth easing curve
-            child: Visibility(
-              visible:
-                  _showResetButton, // Ensure the buttons are only visible when needed
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Reload User Data Button
-                        GestureDetector(
-                          onTap: _isLoading ? null : _refreshUserData,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[800]!.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.blue[700]!,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (_isLoading)
-                                  const SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.blue,
-                                    ),
-                                  )
-                                else
-                                  Icon(Icons.refresh,
-                                      size: 14, color: Colors.blue[300]),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _isLoading ? 'Reloading...' : 'Reload Data',
-                                  style: TextStyle(
-                                    color: _isLoading
-                                        ? Colors.grey[400]
-                                        : Colors.blue[300],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Reset Chat Button
-                        GestureDetector(
-                          onTap: _resetConversation,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[800]!.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.red[700]!,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.restart_alt,
-                                    size: 14, color: Colors.red[300]),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Reset Chat',
-                                  style: TextStyle(
-                                    color: Colors.red[300],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),

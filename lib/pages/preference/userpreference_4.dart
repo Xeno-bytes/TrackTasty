@@ -320,6 +320,7 @@ class _Userpreference4 extends State<Userpreference4> {
                                   FilteringTextInputFormatter.allow(
                                       RegExp(r"[0-9\']")),
                                   LengthLimitingTextInputFormatter(6),
+                                  _MacroInputFormatter(),
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -357,6 +358,18 @@ class _Userpreference4 extends State<Userpreference4> {
                                       totalInches = double.tryParse(value) ?? 0;
                                     }
 
+                                    // Validate format: 1-3 digits, optional decimal, 0-2 decimal digits
+                                    final regex =
+                                        RegExp(r'^\d{1,3}(\.\d{0,2})?$');
+                                    if (!regex.hasMatch(value)) {
+                                      return 'Invalid format';
+                                    }
+
+                                    // Validate total length
+                                    if (value.length > 6) {
+                                      return 'Max 6 chars';
+                                    }
+
                                     if (totalInches < 20 || totalInches > 120) {
                                       return 'Height should be between 20-120 inches';
                                     }
@@ -392,7 +405,7 @@ class _Userpreference4 extends State<Userpreference4> {
                             child: MyTextfield(
                               hintText: isMetric
                                   ? 'Weight (20-300 kg)'
-                                  : 'Height (40-660 lbs)',
+                                  : 'Weight (40-660 lbs)',
                               obscureText: false,
                               focusNode: _weightFocusNode,
                               suffixText: isMetric ? 'kg' : 'lb',
@@ -403,6 +416,7 @@ class _Userpreference4 extends State<Userpreference4> {
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
                                 LengthLimitingTextInputFormatter(6),
+                                _MacroInputFormatter(),
                               ],
                               keyboardType: TextInputType.numberWithOptions(
                                   decimal: true),
@@ -417,6 +431,17 @@ class _Userpreference4 extends State<Userpreference4> {
                                 } else if (!isMetric &&
                                     (weight < 40 || weight > 660)) {
                                   return 'Weight should be around 40-660 lbs';
+                                }
+
+                                // Validate format: 1-3 digits, optional decimal, 0-2 decimal digits
+                                final regex = RegExp(r'^\d{1,3}(\.\d{0,2})?$');
+                                if (!regex.hasMatch(value)) {
+                                  return 'Invalid format';
+                                }
+
+                                // Validate total length
+                                if (value.length > 6) {
+                                  return 'Max 6 chars';
                                 }
                                 return null;
                               },
@@ -449,7 +474,7 @@ class _Userpreference4 extends State<Userpreference4> {
                               child: MyTextfield(
                             hintText: isMetric
                                 ? 'Weight (20-300 kg)'
-                                : 'Height (40-660 lbs)',
+                                : 'Weight (40-660 lbs)',
                             obscureText: false,
                             suffixText: isMetric ? 'kg' : 'lb',
                             controller: goalWeightController,
@@ -461,6 +486,7 @@ class _Userpreference4 extends State<Userpreference4> {
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
                               LengthLimitingTextInputFormatter(6),
+                              _MacroInputFormatter(),
                             ],
                             keyboardType:
                                 TextInputType.numberWithOptions(decimal: true),
@@ -476,6 +502,17 @@ class _Userpreference4 extends State<Userpreference4> {
                               } else if (!isMetric &&
                                   (weight < 40 || weight > 660)) {
                                 return 'Weight should be around 40-660 lbs';
+                              }
+
+                              // Validate format: 1-3 digits, optional decimal, 0-2 decimal digits
+                              final regex = RegExp(r'^\d{1,3}(\.\d{0,2})?$');
+                              if (!regex.hasMatch(value)) {
+                                return 'Invalid format';
+                              }
+
+                              // Validate total length
+                              if (value.length > 6) {
+                                return 'Max 6 chars';
                               }
 
                               // Validate the weight input based on the goal
@@ -563,5 +600,28 @@ class _Userpreference4 extends State<Userpreference4> {
         ),
       ),
     );
+  }
+}
+
+class _MacroInputFormatter extends TextInputFormatter {
+  final RegExp _validFormat = RegExp(r'^\d{0,3}(\.\d{0,2})?$');
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Allow empty value
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Check if the new value matches our valid format
+    if (_validFormat.hasMatch(newValue.text)) {
+      return newValue;
+    }
+
+    // If not valid, return the old value
+    return oldValue;
   }
 }
